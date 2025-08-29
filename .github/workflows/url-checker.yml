@@ -13,7 +13,6 @@ jobs:
         with:
           node-version: "22"
       - run: npm install
-      - run: node url-checker/url-checker.js
 
       - name: Run URL Checker
         run: node url-checker.js
