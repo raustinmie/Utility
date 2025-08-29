@@ -1,7 +1,8 @@
 name: Daily Link Check
 on:
-  schedule:
-    - cron: "0 14 * * *"
+  workflow_dispatch:
+    schedule:
+      - cron: "0 14 * * *"
 jobs:
   link-check:
     runs-on: ubuntu-latest
