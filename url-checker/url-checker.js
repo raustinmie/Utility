@@ -48,10 +48,16 @@ const PAGES_TO_CHECK = [
 	"https://www.pilgrimsquill.com/about",
 ];
 
+function isSocialMedia(url) {
+	return /facebook\.com|instagram\.com|linkedin\.com|twitter\.com|youtube\.com/.test(
+		url
+	);
+}
+
 async function checkLink(url, parentPage) {
 	try {
 		const response = await fetch(url, {
-			method: "HEAD",
+			method: "GET",
 			redirect: "follow",
 			headers: {
 				"User-Agent":
@@ -61,17 +67,25 @@ async function checkLink(url, parentPage) {
 		});
 		var linkLogMessage;
 		if (!response.ok) {
-			logMessage = `❌ Broken link on ${parentPage}: ${url} (Status ${response.status}`;
-			console.log(logMessage);
+			if (
+				(isSocialMedia(url) && response.status === 400) ||
+				response.status === 403
+			) {
+				const linkLogMessage = `⚠️ Social media link potentially restricted on ${parentPage}: ${url} (Status ${response.status})`;
+				console.log(linkLogMessage);
+				return { linkSuccess: true, linkLogMessage };
+			}
+			linkLogMessage = `❌ Broken link on ${parentPage}: ${url} (Status ${response.status}`;
+			console.log(linkLogMessage);
 			return { linkSuccess: false, linkLogMessage };
 		} else {
-			logMessage = `✅ OK link on ${parentPage}: ${url}`;
-			console.log(logMessage);
+			linkLogMessage = `✅ OK link on ${parentPage}: ${url}`;
+			console.log(linkLogMessage);
 			return { linkSuccess: true, linkLogMessage };
 		}
 	} catch (error) {
-		logMessage = `⚠️ Error on ${parentPage}: ${url} (${error.message})`;
-		console.log(logMessage);
+		linkLogMessage = `⚠️ Error on ${parentPage}: ${url} (${error.message})`;
+		console.log(linkLogMessage);
 		return { linkSuccess: false, linkLogMessage };
 	}
 }
