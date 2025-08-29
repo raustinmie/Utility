@@ -69,8 +69,7 @@ async function checkLink(url, parentPage) {
 		if (!response.ok) {
 			if (
 				(isSocialMedia(url) && response.status === 400) ||
-				response.status === 403 ||
-				response.status === 429
+				response.status === 403
 			) {
 				const linkLogMessage = `⚠️ Social media link potentially restricted on ${parentPage}: ${url} (Status ${response.status})`;
 				console.log(linkLogMessage);
