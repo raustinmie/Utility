@@ -1,0 +1,13 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug URL Checker",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceFolder}/url-checker/url-checker.js",
+			"envFile": "${workspaceFolder}.env",
+			"console": "integratedTerminal"
+		}
+	]
+}
