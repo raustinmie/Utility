@@ -46,6 +46,11 @@ const PAGES_TO_CHECK = [
 	"https://www.pilgrimsquill.com/gallery",
 	"https://www.pilgrimsquill.com/services",
 	"https://www.pilgrimsquill.com/about",
+	//ABSOLUTE SOS
+	"https://www.absolutesos.com/",
+	"https://www.absolutesos.com/services",
+	"https://www.absolutesos.com/about",
+	"https://www.absolutesos.com/contact",
 ];
 
 function isSocialMedia(url) {
