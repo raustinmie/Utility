@@ -51,6 +51,17 @@ const PAGES_TO_CHECK = [
 	"https://www.absolutesos.com/services",
 	"https://www.absolutesos.com/about",
 	"https://www.absolutesos.com/contact",
+	//DEEZ EVENTS
+	"https://www.deezevents.com/",
+	"https://www.deezevents.com/about",
+	"https://www.deezevents.com/services",
+	"https://www.deezevents.com/contact",
+	"https://www.deezevents.com/services/karaoke",
+	"https://www.deezevents.com/services/dj-party",
+	"https://www.deezevents.com/services/photo-booth",
+	"https://www.deezevents.com/services/rentals",
+	"https://www.deezevents.com/services/music-bingo",
+	"https://www.deezevents.com/gallery",
 ];
 
 function isSocialMedia(url) {
