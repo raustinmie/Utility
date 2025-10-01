@@ -62,6 +62,12 @@ const PAGES_TO_CHECK = [
 	"https://www.deezevents.com/services/rentals",
 	"https://www.deezevents.com/services/music-bingo",
 	"https://www.deezevents.com/gallery",
+	//FOUR SEASONS HEATING AND COOLING
+	"https://www.4seasonsheating-cooling.com/",
+	"https://www.4seasonsheating-cooling.com/services",
+	"https://www.4seasonsheating-cooling.com/about",
+	"https://www.4seasonsheating-cooling.com/contact",
+	"https://www.4seasonsheating-cooling.com/faq",
 ];
 
 function isSocialMedia(url) {
