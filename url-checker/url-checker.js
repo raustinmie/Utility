@@ -68,6 +68,12 @@ const PAGES_TO_CHECK = [
 	"https://www.4seasonsheating-cooling.com/about",
 	"https://www.4seasonsheating-cooling.com/contact",
 	"https://www.4seasonsheating-cooling.com/faq",
+	//RED BARN MARKET EVENTS
+	"https://www.redbarnmarketevents.com/",
+	"https://www.redbarnmarketevents.com/about",
+	"https://www.redbarnmarketevents.com/vendor-information",
+	"https://www.redbarnmarketevents.com/contact",
+	"https://www.redbarnmarketevents.com/market-information",
 ];
 
 function isSocialMedia(url) {
