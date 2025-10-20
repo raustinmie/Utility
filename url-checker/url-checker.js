@@ -74,6 +74,12 @@ const PAGES_TO_CHECK = [
 	"https://www.redbarnmarketevents.com/vendor-information",
 	"https://www.redbarnmarketevents.com/contact",
 	"https://www.redbarnmarketevents.com/market-information",
+	//HALF MOON'S FARM
+	"https://www.halfmoonsfarm.com/",
+	"https://www.halfmoonsfarm.com/about/",
+	"https://www.halfmoonsfarm.com/shop/sweet-peas/",
+	"https://www.halfmoonsfarm.com/shop/flower-subscriptions/",
+	"https://www.halfmoonsfarm.com/contact/",
 ];
 
 function isSocialMedia(url) {
