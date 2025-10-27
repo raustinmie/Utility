@@ -80,6 +80,12 @@ const PAGES_TO_CHECK = [
 	"https://www.halfmoonsfarm.com/shop/sweet-peas/",
 	"https://www.halfmoonsfarm.com/shop/flower-subscriptions/",
 	"https://www.halfmoonsfarm.com/contact/",
+	//MEYER'S CABINETS
+	"https://www.meyerscabinets.com/",
+	"https://www.meyerscabinets.com/gallery/",
+	"https://www.meyerscabinets.com/services/",
+	"https://www.meyerscabinets.com/about/",
+	"https://www.meyerscabinets.com/contact/",
 ];
 
 function isSocialMedia(url) {
