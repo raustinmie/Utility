@@ -86,6 +86,12 @@ const PAGES_TO_CHECK = [
 	"https://www.meyerscabinets.com/services/",
 	"https://www.meyerscabinets.com/about/",
 	"https://www.meyerscabinets.com/contact/",
+	//SHAWN MARTINEZ CONSTRUCTION
+	"https://www.shawnmartinezconstruction.com/",
+	"https://www.shawnmartinezconstruction.com/services/",
+	"https://www.shawnmartinezconstruction.com/about/",
+	"https://www.shawnmartinezconstruction.com/gallery/",
+	"https://www.shawnmartinezconstruction.com/contact/",
 ];
 
 function isSocialMedia(url) {

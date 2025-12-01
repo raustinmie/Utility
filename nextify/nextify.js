@@ -54,10 +54,19 @@ content = content.replace(
 		const src = srcMatch ? srcMatch[1] : undefined;
 		const alt = altMatch ? altMatch[1] : '""';
 
-		// Build Next.js <Image> tag
+		// Remove handled attributes so we don’t duplicate them
+		let remaining = imgProps
+			.replace(/\b(width|height|src|alt)=["'][^"']*["']/gi, "")
+			.trim();
+
+		// Clean up trailing slash
+		if (remaining.endsWith("/")) remaining = remaining.slice(0, -1).trim();
+
+		// Build Next.js <Image> tag, preserving other props (like className)
 		let imageTag = `<Image src="${src}" alt="${alt}"`;
 		if (width) imageTag += ` width={${width}}`;
 		if (height) imageTag += ` height={${height}}`;
+		if (remaining) imageTag += ` ${remaining}`;
 		imageTag += " />";
 
 		// Wrap <Image> in <div> with the original <picture> attributes
@@ -77,9 +86,16 @@ content = content.replace(/<img([^>]*)>/g, (_, props) => {
 	const src = srcMatch ? srcMatch[1] : undefined;
 	const alt = altMatch ? altMatch[1] : '""';
 
+	let remaining = props
+		.replace(/\b(width|height|src|alt)=["'][^"']*["']/gi, "")
+		.trim();
+
+	if (remaining.endsWith("/")) remaining = remaining.slice(0, -1).trim();
+
 	let imageTag = `<Image src="${src}" alt="${alt}"`;
 	if (width) imageTag += ` width={${width}}`;
 	if (height) imageTag += ` height={${height}}`;
+	if (remaining) imageTag += ` ${remaining}`;
 	imageTag += " />";
 
 	return imageTag;
