@@ -21,18 +21,40 @@ content = content.replace(/export default function ([\w-]+)\(/, (_, name) => {
 	return `export default function ${newName}(`;
 });
 
-// --- 2. Comment out HTML comments ---
+// --- 2. Remove section header comments outside <section> tags ---
+const removeOutsideSections = (input, pattern) => {
+	const sectionRegex = /<section\b[^>]*>[\s\S]*?<\/section>/gi;
+	let result = "";
+	let lastIndex = 0;
+	let match;
+
+	while ((match = sectionRegex.exec(input)) !== null) {
+		const outside = input.slice(lastIndex, match.index);
+		result += outside.replace(pattern, "");
+		result += match[0];
+		lastIndex = match.index + match[0].length;
+	}
+
+	const tail = input.slice(lastIndex);
+	result += tail.replace(pattern, "");
+	return result;
+};
+
+const sectionHeaderComment = /<!--\s*={8,}\s*-->\s*<!--[\s\S]*?-->\s*<!--\s*={8,}\s*-->\s*/g;
+content = removeOutsideSections(content, sectionHeaderComment);
+
+// --- 3. Comment out HTML comments ---
 content = content.replace(/<!--(.*?)-->/gs, (_, comment) => `{/*${comment}*/}`);
 
-// --- 3. Replace class= with className= ---
+// --- 4. Replace class= with className= ---
 content = content.replace(/\bclass=/g, "className=");
 
-// --- 4. Import next/image if missing ---
+// --- 5. Import next/image if missing ---
 if (!content.includes('import Image from "next/image"')) {
 	content = 'import Image from "next/image";\n' + content;
 }
 
-// --- 5. Handle <picture> elements ---
+// --- 6. Handle <picture> elements ---
 // Replace <picture> with a <div> wrapper that keeps the original attributes
 content = content.replace(
 	/<picture([^>]*)>([\s\S]*?)<\/picture>/gi,
@@ -74,7 +96,7 @@ content = content.replace(
 	}
 );
 
-// --- 6. Convert remaining <img> tags outside <picture> ---
+// --- 7. Convert remaining <img> tags outside <picture> ---
 content = content.replace(/<img([^>]*)>/g, (_, props) => {
 	const widthMatch = props.match(/width=["'](\d+)["']/);
 	const heightMatch = props.match(/height=["'](\d+)["']/);
@@ -101,7 +123,7 @@ content = content.replace(/<img([^>]*)>/g, (_, props) => {
 	return imageTag;
 });
 
-// --- 7. Import next/link if missing ---
+// --- 8. Import next/link if missing ---
 if (
 	!content.includes('import Link from "next/link"') &&
 	/<a[\s>]/i.test(content)
@@ -109,7 +131,7 @@ if (
 	content = 'import Link from "next/link";\n' + content;
 }
 
-// --- 8. Convert a tags to next/Link
+// --- 9. Convert a tags to next/Link
 content = content.replace(/<a(\s[^>]*)?>/gi, "<Link$1>");
 content = content.replace(/<\/a>/gi, "</Link>");
 

@@ -14,6 +14,15 @@ const componentDir = path.join(cwd, name);
 const tsxFile = path.join(componentDir, `${name}.tsx`);
 const cssFile = path.join(componentDir, `${name}.css`);
 
+const toNextifiedName = (rawName) =>
+	rawName
+		.split(/[-_\s]+/)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join("");
+
+const componentName = toNextifiedName(name);
+
 // 1. Make the folder
 if (!fs.existsSync(componentDir)) {
 	fs.mkdirSync(componentDir);
@@ -27,7 +36,7 @@ if (!fs.existsSync(componentDir)) {
 const tsxTemplate = `import React from "react";
 import Image from "next/image";
 
-export default function ${name}() {
+export default function ${componentName}() {
   return ();
 }
 `;
@@ -60,6 +69,67 @@ if (fs.existsSync(appFile)) {
 	}
 } else {
 	console.warn(`⚠️ _app.tsx not found at ${appFile}. Skipping import.`);
+}
+
+// 5. Add component import + usage to corresponding page
+const cwdParts = cwd.split(path.sep);
+const srcIndex = cwdParts.lastIndexOf("src");
+const componentsIndex =
+	srcIndex >= 0 ? cwdParts.indexOf("components", srcIndex) : -1;
+const pageName = cwdParts[cwdParts.length - 1];
+const repoRoot =
+	srcIndex >= 0 ? cwdParts.slice(0, srcIndex).join(path.sep) : null;
+const pageFile =
+	repoRoot && componentsIndex !== -1
+		? path.join(repoRoot, "src", "pages", `${pageName}.tsx`)
+		: null;
+
+if (pageFile && fs.existsSync(pageFile)) {
+	const relativeComponentPath = path
+		.relative(path.dirname(pageFile), tsxFile)
+		.replace(/\\/g, "/")
+		.replace(/\.tsx$/, "");
+	const importLine = `import ${componentName} from "${relativeComponentPath}";`;
+
+	let pageContents = fs.readFileSync(pageFile, "utf-8");
+
+	if (!pageContents.includes(importLine)) {
+		const importMatches = pageContents.match(/^import .*;$/gm);
+		if (importMatches && importMatches.length > 0) {
+			const lastImport = importMatches[importMatches.length - 1];
+			pageContents = pageContents.replace(
+				lastImport,
+				`${lastImport}\n${importLine}`
+			);
+		} else {
+			pageContents = `${importLine}\n${pageContents}`;
+		}
+	}
+
+	if (!pageContents.includes(`<${componentName} />`)) {
+		const lastDivCloseIndex = pageContents.lastIndexOf("</div>");
+		if (lastDivCloseIndex !== -1) {
+			const beforeClose = pageContents.slice(0, lastDivCloseIndex);
+			const afterClose = pageContents.slice(lastDivCloseIndex);
+			const lineStartIndex = beforeClose.lastIndexOf("\n") + 1;
+			const lineIndentMatch = beforeClose
+				.slice(lineStartIndex)
+				.match(/^(\s*)/);
+			const baseIndent = lineIndentMatch ? lineIndentMatch[1] : "";
+			const indentUnit = pageContents.includes("\n\t") ? "\t" : "  ";
+			const insertIndent = `${baseIndent}${indentUnit}`;
+			pageContents = `${beforeClose}${insertIndent}<${componentName} />\n${baseIndent}${afterClose}`;
+		} else {
+			console.warn(
+				`⚠️ Could not find a closing </div> in ${pageFile}. Skipping component usage insertion.`
+			);
+		}
+	}
+
+	fs.writeFileSync(pageFile, pageContents, "utf-8");
+	console.log(`✅ Added ${componentName} to ${pageFile}`);
+} else {
+	console.warn(`⚠️ Page not found. Skipping page update.`);
 }
 
 // sudo ln -s /Users/austinmiedema/code/Utility/create-component/create-component.js /usr/local/bin/create-component

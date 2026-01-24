@@ -92,11 +92,49 @@ const PAGES_TO_CHECK = [
 	"https://www.shawnmartinezconstruction.com/about/",
 	"https://www.shawnmartinezconstruction.com/gallery/",
 	"https://www.shawnmartinezconstruction.com/contact/",
+	//TRUE SURFACE CONCRETE RESTORATION
+	"https://truesurfacenorthwest.com/",
+	"https://truesurfacenorthwest.com/gallery",
+	"https://truesurfacenorthwest.com/services",
+	"https://truesurfacenorthwest.com/about",
+	"https://truesurfacenorthwest.com/contact",
+	"https://truesurfacenorthwest.com/reviews",
+	"https://truesurfacenorthwest.com/faq",
+	//LIONS CAMP HORIZON
+	"https://www.lionscamphorizon.org/",
+	"https://www.lionscamphorizon.org/camp",
+	"https://www.lionscamphorizon.org/camper-application",
+	"https://www.lionscamphorizon.org/camper-application-thank-you",
+	"https://www.lionscamphorizon.org/contact",
+	"https://www.lionscamphorizon.org/donate",
+	"https://www.lionscamphorizon.org/facility-rentals",
+	"https://www.lionscamphorizon.org/get-involved",
+	"https://www.lionscamphorizon.org/policies",
+	"https://www.lionscamphorizon.org/special-events",
+	"https://www.lionscamphorizon.org/staff",
+	"https://www.lionscamphorizon.org/thank-you",
+	"https://www.lionscamphorizon.org/who-we-are",
+	//WASHBOY PRESSURE WASHING
+	"https://www.thewashboy.com/",
+	"https://www.thewashboy.com/about",
+	"https://www.thewashboy.com/contact",
+	"https://www.thewashboy.com/faq",
+	"https://www.thewashboy.com/gallery",
+	"https://www.thewashboy.com/reviews",
+	"https://www.thewashboy.com/services/commercial-washing",
+	"https://www.thewashboy.com/services/concrete-restoration",
+	"https://www.thewashboy.com/services/fleet-washing",
+	"https://www.thewashboy.com/services/gutter-cleaning",
+	"https://www.thewashboy.com/services/pressure-washing",
+	"https://www.thewashboy.com/services/roof-cleaning",
+	"https://www.thewashboy.com/services/roof-repair",
+	"https://www.thewashboy.com/services/soft-washing",
+	"https://www.thewashboy.com/services/window-cleaning",
 ];
 
 function isSocialMedia(url) {
 	return /facebook\.com|instagram\.com|linkedin\.com|twitter\.com|youtube\.com/.test(
-		url
+		url,
 	);
 }
 
