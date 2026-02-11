@@ -121,6 +121,7 @@ const PAGES_TO_CHECK = [
 	"https://www.thewashboy.com/faq",
 	"https://www.thewashboy.com/gallery",
 	"https://www.thewashboy.com/reviews",
+	"https://www.thewashboy.com/recent-projects",
 	"https://www.thewashboy.com/services/commercial-washing",
 	"https://www.thewashboy.com/services/concrete-restoration",
 	"https://www.thewashboy.com/services/fleet-washing",
