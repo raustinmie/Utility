@@ -27,7 +27,6 @@ const PAGES_TO_CHECK = [
 	"https://www.harborviewwebdesign.com/services",
 	"https://www.harborviewwebdesign.com/about",
 	"https://www.harborviewwebdesign.com/contact",
-	"https://www.harborviewwebdesign.com/blog",
 	"https://www.harborviewwebdesign.com/faq",
 	//SPRUCE IT UP LANDSCAPING
 	"https://www.spruceituplandscaping.org/",

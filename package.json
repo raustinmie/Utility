@@ -3,7 +3,9 @@
 	"version": "1.0.0",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"check:avif": "bash scripts/portable/check-avif-compat.sh public/images",
+		"fix:avif": "bash scripts/portable/fix-avif-compat.sh public/images"
 	},
 	"keywords": [],
 	"author": "",
