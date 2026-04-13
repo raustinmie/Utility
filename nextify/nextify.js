@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+
+// sudo ln -sf /Users/austinmiedema/code/Utility/nextify/nextify.js /usr/local/bin/nextify
+// chmod +x /Users/austinmiedema/code/Utility/nextify/nextify.js
+
 const fs = require("fs");
 const path = require("path");
 
@@ -40,7 +44,8 @@ const removeOutsideSections = (input, pattern) => {
 	return result;
 };
 
-const sectionHeaderComment = /<!--\s*={8,}\s*-->\s*<!--[\s\S]*?-->\s*<!--\s*={8,}\s*-->\s*/g;
+const sectionHeaderComment =
+	/<!--\s*={8,}\s*-->\s*<!--[\s\S]*?-->\s*<!--\s*={8,}\s*-->\s*/g;
 content = removeOutsideSections(content, sectionHeaderComment);
 
 // --- 3. Comment out HTML comments ---
@@ -73,7 +78,6 @@ content = content.replace(
 
 		const width = widthMatch ? widthMatch[1] : undefined;
 		const height = heightMatch ? heightMatch[1] : undefined;
-		const src = srcMatch ? srcMatch[1] : undefined;
 		const alt = altMatch ? altMatch[1] : '""';
 
 		// Remove handled attributes so we don’t duplicate them
@@ -85,7 +89,7 @@ content = content.replace(
 		if (remaining.endsWith("/")) remaining = remaining.slice(0, -1).trim();
 
 		// Build Next.js <Image> tag, preserving other props (like className)
-		let imageTag = `<Image src="${src}" alt="${alt}"`;
+		let imageTag = `<Image src="" alt="${alt}"`;
 		if (width) imageTag += ` width={${width}}`;
 		if (height) imageTag += ` height={${height}}`;
 		if (remaining) imageTag += ` ${remaining}`;
@@ -93,7 +97,7 @@ content = content.replace(
 
 		// Wrap <Image> in <div> with the original <picture> attributes
 		return `<div${pictureAttrs}>${imageTag}</div>`;
-	}
+	},
 );
 
 // --- 7. Convert remaining <img> tags outside <picture> ---
@@ -105,7 +109,6 @@ content = content.replace(/<img([^>]*)>/g, (_, props) => {
 
 	const width = widthMatch ? widthMatch[1] : undefined;
 	const height = heightMatch ? heightMatch[1] : undefined;
-	const src = srcMatch ? srcMatch[1] : undefined;
 	const alt = altMatch ? altMatch[1] : '""';
 
 	let remaining = props
@@ -114,7 +117,7 @@ content = content.replace(/<img([^>]*)>/g, (_, props) => {
 
 	if (remaining.endsWith("/")) remaining = remaining.slice(0, -1).trim();
 
-	let imageTag = `<Image src="${src}" alt="${alt}"`;
+	let imageTag = `<Image src="" alt="${alt}"`;
 	if (width) imageTag += ` width={${width}}`;
 	if (height) imageTag += ` height={${height}}`;
 	if (remaining) imageTag += ` ${remaining}`;

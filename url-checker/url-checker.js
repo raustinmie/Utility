@@ -1,3 +1,5 @@
+//To run this from the utility folder: node url-checker/url-checker.js
+
 const cheerio = require("cheerio");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
@@ -130,6 +132,41 @@ const PAGES_TO_CHECK = [
 	"https://www.thewashboy.com/services/roof-repair",
 	"https://www.thewashboy.com/services/soft-washing",
 	"https://www.thewashboy.com/services/window-cleaning",
+	//ROTHWELL MMA
+	"https://www.rothwellmma.com/",
+	"https://www.rothwellmma.com/about",
+	"https://www.rothwellmma.com/adult-classes",
+	"https://www.rothwellmma.com/contact",
+	"https://www.rothwellmma.com/faq",
+	"https://www.rothwellmma.com/free-class",
+	"https://www.rothwellmma.com/login",
+	"https://www.rothwellmma.com/member-hold",
+	"https://www.rothwellmma.com/schedule",
+	"https://www.rothwellmma.com/sign-up",
+	"https://www.rothwellmma.com/youth-classes",
+	//GTM DESIGN GROUP
+	"https://www.gtmdesigngroup.com/",
+	"https://www.gtmdesigngroup.com/about",
+	"https://www.gtmdesigngroup.com/contact",
+	"https://www.gtmdesigngroup.com/custom-work/",
+	"https://www.gtmdesigngroup.com/gallery",
+	"https://www.gtmdesigngroup.com/products",
+	"https://www.gtmdesigngroup.com/products/card-sleeve-display",
+	"https://www.gtmdesigngroup.com/products/large-dice-tower",
+	"https://www.gtmdesigngroup.com/products/playmat-display",
+	"https://www.gtmdesigngroup.com/products/small-dice-tower",
+	//YAKIMA MMA
+	"https://www.yakmma.com/",
+	"https://www.yakmma.com/about",
+	"https://www.yakmma.com/classes",
+	"https://www.yakmma.com/faq",
+	"https://www.yakmma.com/contact",
+	//TCBUILDS
+	"https://www.tcbuildsllc.com/",
+	"https://www.tcbuildsllc.com/about",
+	"https://www.tcbuildsllc.com/services",
+	"https://www.tcbuildsllc.com/gallery",
+	"https://www.tcbuildsllc.com/contact",
 ];
 
 function isSocialMedia(url) {
@@ -138,8 +175,22 @@ function isSocialMedia(url) {
 	);
 }
 
+const IGNORED_LINKS = new Set([
+	"https://app.gethearth.com/partners/four-seasons-heating-and-cooling/aaron/apply",
+]);
+
+function isIgnoredLink(url) {
+	return IGNORED_LINKS.has(url.trim());
+}
+
 async function checkLink(url, parentPage) {
 	try {
+		if (isIgnoredLink(url)) {
+			const linkLogMessage = `⚠️ Ignored link on ${parentPage}: ${url}`;
+			console.log(linkLogMessage);
+			return { linkSuccess: true, linkLogMessage };
+		}
+
 		const response = await fetch(url, {
 			method: "GET",
 			redirect: "follow",
