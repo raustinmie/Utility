@@ -14,7 +14,21 @@ const transporter = nodemailer.createTransport({
 	},
 });
 
+function hasSmtpConfig() {
+	return Boolean(
+		process.env.SMTP_HOST &&
+			process.env.SMTP_PORT &&
+			process.env.SMTP_USER &&
+			process.env.SMTP_PASS &&
+			process.env.EMAIL_TO,
+	);
+}
+
 async function sendEmail(subject, body) {
+	if (!hasSmtpConfig()) {
+		throw new Error("SMTP or email recipient configuration is missing");
+	}
+
 	await transporter.sendMail({
 		from: '"Site Monitor" <austin@harborviewwebdesign.com>',
 		to: process.env.EMAIL_TO,
@@ -22,6 +36,15 @@ async function sendEmail(subject, body) {
 		text: body,
 	});
 }
+
+const TEMP_PAGES = [
+	"https://pacific-growers.vercel.app/",
+	"https://pacific-growers.vercel.app/about",
+	"https://pacific-growers.vercel.app/services",
+	"https://pacific-growers.vercel.app/fundraisers",
+	"https://pacific-growers.vercel.app/gallery",
+	"https://pacific-growers.vercel.app/contact",
+];
 
 const PAGES_TO_CHECK = [
 	//HARBORVIEW WEB DESIGN
@@ -167,6 +190,52 @@ const PAGES_TO_CHECK = [
 	"https://www.tcbuildsllc.com/services",
 	"https://www.tcbuildsllc.com/gallery",
 	"https://www.tcbuildsllc.com/contact",
+	//PEAS IN A POD
+	"https://www.peasinapoddetailing.com/",
+	"https://www.peasinapoddetailing.com/about",
+	"https://www.peasinapoddetailing.com/services",
+	"https://www.peasinapoddetailing.com/gallery",
+	"https://www.peasinapoddetailing.com/maintenance",
+	"https://www.peasinapoddetailing.com/pricing",
+	"https://www.peasinapoddetailing.com/pod-shop",
+	"https://www.peasinapoddetailing.com/faq",
+	"https://www.peasinapoddetailing.com/contact",
+	//RAZZFEST
+	"https://www.nwraspberryfestival.com/",
+	"https://www.nwraspberryfestival.com/3v3-basketball",
+	"https://www.nwraspberryfestival.com/razz-and-shine",
+	"https://www.nwraspberryfestival.com/music-and-entertainment",
+	"https://www.nwraspberryfestival.com/raspberry-farm-tours",
+	"https://www.nwraspberryfestival.com/festival-highlights",
+	"https://www.nwraspberryfestival.com/vendors",
+	"https://www.nwraspberryfestival.com/sponsorship",
+	"https://www.nwraspberryfestival.com/contact",
+	"https://www.nwraspberryfestival.com/basketball-registration",
+	//CRAWL SOLUTIONS
+	"https://www.crawlsolutionsllc.com/",
+	"https://www.crawlsolutionsllc.com/services",
+	"https://www.crawlsolutionsllc.com/about",
+	"https://www.crawlsolutionsllc.com/gallery",
+	"https://www.crawlsolutionsllc.com/contact",
+	//ASHBURY CONSULTING
+	"https://ashbury-consulting.com/",
+	"https://ashbury-consulting.com/services",
+	"https://ashbury-consulting.com/about",
+	"https://ashbury-consulting.com/industries",
+	"https://ashbury-consulting.com/contact",
+	//BRIGHT SKY ELECTRIC
+	"https://www.brightskyelec.com/",
+	"https://www.brightskyelec.com/solar-and-battery",
+	"https://www.brightskyelec.com/electrical-services",
+	"https://www.brightskyelec.com/about",
+	"https://www.brightskyelec.com/contact",
+	//PACIFIC growers
+	"https://www.pacificgrowersinc.com/",
+	"https://www.pacificgrowersinc.com/about",
+	"https://www.pacificgrowersinc.com/services",
+	"https://www.pacificgrowersinc.com/fundraisers",
+	"https://www.pacificgrowersinc.com/gallery",
+	"https://www.pacificgrowersinc.com/contact",
 ];
 
 function isSocialMedia(url) {
@@ -203,11 +272,17 @@ async function checkLink(url, parentPage) {
 		var linkLogMessage;
 		if (!response.ok) {
 			if (
-				(isSocialMedia(url) && response.status === 400) ||
-				response.status === 403 ||
-				response.status === 429
+				isSocialMedia(url) &&
+				(response.status === 400 ||
+					response.status === 403 ||
+					response.status === 429)
 			) {
 				const linkLogMessage = `⚠️ Social media link potentially restricted on ${parentPage}: ${url} (Status ${response.status})`;
+				console.log(linkLogMessage);
+				return { linkSuccess: true, linkLogMessage };
+			}
+			if (response.status === 403 || response.status === 429) {
+				const linkLogMessage = `⚠️ Link may be blocking automated requests on ${parentPage}: ${url} (Status ${response.status})`;
 				console.log(linkLogMessage);
 				return { linkSuccess: true, linkLogMessage };
 			}
@@ -265,8 +340,15 @@ async function main() {
 		}
 	}
 	if (brokenLinks.length > 0) {
-		await sendEmail("Broken Links Detected", brokenLinks.join("\n"));
+		try {
+			await sendEmail("Broken Links Detected", brokenLinks.join("\n"));
+		} catch (error) {
+			console.error(`⚠️ Failed to send email: ${error.message}`);
+		}
 	}
 }
 
-main();
+main().catch((error) => {
+	console.error(`Fatal error: ${error.message}`);
+	process.exitCode = 1;
+});
