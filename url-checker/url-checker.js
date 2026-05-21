@@ -339,7 +339,7 @@ async function main() {
 				brokenLinks.push(`Link ${link} | Error: ${linkLogMessage}`);
 		}
 	}
-	if (brokenLinks.length > 0) {
+if (brokenLinks.length > 0) {
 		try {
 			await sendEmail("Broken Links Detected", brokenLinks.join("\n"));
 		} catch (error) {
@@ -352,3 +352,5 @@ main().catch((error) => {
 	console.error(`Fatal error: ${error.message}`);
 	process.exitCode = 1;
 });
+
+module.exports = { PAGES_TO_CHECK };

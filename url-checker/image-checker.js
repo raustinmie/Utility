@@ -14,7 +14,21 @@ const transporter = nodemailer.createTransport({
 	},
 });
 
+function hasSmtpConfig() {
+	return Boolean(
+		process.env.SMTP_HOST &&
+			process.env.SMTP_PORT &&
+			process.env.SMTP_USER &&
+			process.env.SMTP_PASS &&
+			process.env.EMAIL_TO,
+	);
+}
+
 async function sendEmail(subject, body) {
+	if (!hasSmtpConfig()) {
+		throw new Error("SMTP or email recipient configuration is missing");
+	}
+
 	await transporter.sendMail({
 		from: '"Site Monitor" <austin@harborviewwebdesign.com>',
 		to: process.env.EMAIL_TO,
@@ -248,8 +262,12 @@ async function main() {
 
 	const allProblems = [...pageErrors, ...issues];
 	if (allProblems.length > 0) {
-		await sendEmail("Image Rendering Issues Detected", allProblems.join("\n"));
-		console.log(`\nSent report with ${allProblems.length} issue(s).`);
+		try {
+			await sendEmail("Image Rendering Issues Detected", allProblems.join("\n"));
+			console.log(`\nSent report with ${allProblems.length} issue(s).`);
+		} catch (error) {
+			console.error(`\n⚠️ Failed to send email: ${error.message}`);
+		}
 		return;
 	}
 
@@ -257,5 +275,8 @@ async function main() {
 }
 
 if (require.main === module) {
-	main();
+	main().catch((error) => {
+		console.error(`Fatal error: ${error.message}`);
+		process.exitCode = 1;
+	});
 }
