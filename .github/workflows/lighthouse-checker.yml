@@ -1,0 +1,40 @@
+name: Daily Lighthouse Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 19 * * *"
+
+jobs:
+  lighthouse-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Install Lighthouse
+        run: npm install --no-save lighthouse
+
+      - name: Install Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          install-dependencies: true
+
+      - name: Run lighthouse checker
+        run: node url-checker/lighthouse-checker.js
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          PAGESPEED_STRATEGY: mobile

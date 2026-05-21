@@ -1,0 +1,214 @@
+const fs = require("fs");
+const path = require("path");
+const { execFile } = require("child_process");
+const { promisify } = require("util");
+const nodemailer = require("nodemailer");
+require("dotenv").config();
+
+const { HOMEPAGES_TO_CHECK } = require("./pages-to-check");
+const execFileAsync = promisify(execFile);
+
+const transporter = nodemailer.createTransport({
+	host: process.env.SMTP_HOST,
+	port: process.env.SMTP_PORT,
+	secure: true,
+	auth: {
+		user: process.env.SMTP_USER,
+		pass: process.env.SMTP_PASS,
+	},
+});
+
+const STRATEGY =
+	process.env.PAGESPEED_STRATEGY === "desktop" ? "desktop" : "mobile";
+const THRESHOLDS = {
+	performance: parseThreshold("PAGESPEED_THRESHOLD_PERFORMANCE", 90),
+	accessibility: parseThreshold("PAGESPEED_THRESHOLD_ACCESSIBILITY", 90),
+	"best-practices": parseThreshold("PAGESPEED_THRESHOLD_BEST_PRACTICES", 90),
+	seo: parseThreshold("PAGESPEED_THRESHOLD_SEO", 90),
+};
+
+function parseThreshold(envName, fallback) {
+	const value = Number.parseInt(process.env[envName] || "", 10);
+	if (Number.isNaN(value)) return fallback;
+	return Math.max(0, Math.min(100, value));
+}
+
+function hasSmtpConfig() {
+	return Boolean(
+		process.env.SMTP_HOST &&
+		process.env.SMTP_PORT &&
+		process.env.SMTP_USER &&
+		process.env.SMTP_PASS &&
+		process.env.EMAIL_TO,
+	);
+}
+
+async function sendEmail(subject, body) {
+	if (!hasSmtpConfig()) {
+		throw new Error("SMTP or email recipient configuration is missing");
+	}
+
+	await transporter.sendMail({
+		from: '"Site Monitor" <austin@harborviewwebdesign.com>',
+		to: process.env.EMAIL_TO,
+		subject,
+		text: body,
+	});
+}
+
+function formatScore(score) {
+	if (typeof score !== "number") return "n/a";
+	return String(Math.round(score * 100));
+}
+
+function resolveLighthouseCommand() {
+	const localBin = path.resolve(__dirname, "../node_modules/.bin/lighthouse");
+	if (fs.existsSync(localBin)) {
+		return {
+			command: localBin,
+			baseArgs: [],
+		};
+	}
+
+	return {
+		command: "npx",
+		baseArgs: ["--yes", "lighthouse"],
+	};
+}
+
+function buildLighthouseArgs(pageUrl) {
+	const args = [
+		pageUrl,
+		"--output=json",
+		"--output-path=stdout",
+		"--only-categories=performance,accessibility,best-practices,seo",
+		"--quiet",
+		"--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage",
+	];
+
+	if (STRATEGY === "desktop") {
+		args.push("--preset=desktop");
+	}
+
+	if (process.env.CHROME_PATH) {
+		args.push(`--chrome-path=${process.env.CHROME_PATH}`);
+	}
+
+	return args;
+}
+
+async function runLighthouse(pageUrl) {
+	const { command, baseArgs } = resolveLighthouseCommand();
+
+	try {
+		const { stdout, stderr } = await execFileAsync(
+			command,
+			[...baseArgs, ...buildLighthouseArgs(pageUrl)],
+			{
+				cwd: path.resolve(__dirname, ".."),
+				env: {
+					...process.env,
+					npm_config_loglevel: "silent",
+				},
+				maxBuffer: 20 * 1024 * 1024,
+			},
+		);
+
+		return {
+			payload: JSON.parse(stdout),
+			stderr: stderr.trim(),
+		};
+	} catch (error) {
+		const details =
+			error.stderr?.trim() || error.stdout?.trim() || error.message;
+		throw new Error(details);
+	}
+}
+
+function getCategoryScores(payload) {
+	const categories = payload?.categories || payload?.lighthouseResult?.categories || {};
+	return {
+		performance: categories.performance?.score,
+		accessibility: categories.accessibility?.score,
+		"best-practices": categories["best-practices"]?.score,
+		seo: categories.seo?.score,
+	};
+}
+
+function summarizeScores(scores) {
+	return [
+		`performance ${formatScore(scores.performance)}`,
+		`accessibility ${formatScore(scores.accessibility)}`,
+		`best-practices ${formatScore(scores["best-practices"])}`,
+		`seo ${formatScore(scores.seo)}`,
+	].join(" | ");
+}
+
+async function main() {
+	const issues = [];
+	const summaries = [];
+
+	for (const pageUrl of HOMEPAGES_TO_CHECK) {
+		console.log(`\n📊 Checking Lighthouse on: ${pageUrl}`);
+
+		try {
+			const { payload, stderr } = await runLighthouse(pageUrl);
+			const scores = getCategoryScores(payload);
+			const summary = `${pageUrl} | ${summarizeScores(scores)} | strategy ${STRATEGY}`;
+			console.log(`✅ ${summary}`);
+			if (stderr) {
+				console.log(`ℹ️ Lighthouse warnings: ${stderr}`);
+			}
+			summaries.push(summary);
+
+			for (const [category, threshold] of Object.entries(THRESHOLDS)) {
+				const score = scores[category];
+				if (typeof score !== "number") {
+					issues.push(
+						`⚠️ Missing ${category} score: ${pageUrl} | Strategy ${STRATEGY}`,
+					);
+					continue;
+				}
+
+				const scoreOutOf100 = Math.round(score * 100);
+				if (scoreOutOf100 < threshold) {
+					issues.push(
+						`⚠️ ${category} below threshold: ${pageUrl} | Score ${scoreOutOf100} | Threshold ${threshold} | Strategy ${STRATEGY}`,
+					);
+				}
+			}
+		} catch (error) {
+			const message = `❌ Lighthouse run failed: ${pageUrl} | ${error.message} | Strategy ${STRATEGY}`;
+			console.error(message);
+			issues.push(message);
+		}
+	}
+
+	if (issues.length > 0) {
+		const body = [
+			`Lighthouse issues detected for ${issues.length} check(s).`,
+			"",
+			...issues,
+			"",
+			"Score summary:",
+			...summaries,
+		].join("\n");
+
+		try {
+			await sendEmail("Lighthouse Issues Detected", body);
+			console.log(`\nSent report with ${issues.length} issue(s).`);
+		} catch (error) {
+			console.error(`\n⚠️ Failed to send email: ${error.message}`);
+		}
+		return;
+	}
+
+	console.log("\nNo Lighthouse issues detected.");
+}
+
+if (require.main === module) {
+	main().catch((error) => {
+		console.error(`Fatal error: ${error.message}`);
+		process.exitCode = 1;
+	});
+}

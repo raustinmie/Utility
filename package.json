@@ -6,7 +6,9 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"check:avif": "bash scripts/portable/check-avif-compat.sh public/images",
 		"fix:avif": "bash scripts/portable/fix-avif-compat.sh public/images",
-		"check:images": "node url-checker/image-checker.js"
+		"check:images": "node url-checker/image-checker.js",
+		"check:links": "node url-checker/url-checker.js",
+		"check:lighthouse": "node url-checker/lighthouse-checker.js"
 	},
 	"keywords": [],
 	"author": "",

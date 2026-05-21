@@ -2,7 +2,7 @@ const cheerio = require("cheerio");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 
-const { PAGES_TO_CHECK } = require("./url-checker");
+const { PAGES_TO_CHECK } = require("./pages-to-check");
 
 const transporter = nodemailer.createTransport({
 	host: process.env.SMTP_HOST,
