@@ -39,7 +39,6 @@ const PAGES_TO_CHECK = [
 	// DEEZ EVENTS
 	"https://www.deezevents.com/",
 	"https://www.deezevents.com/about",
-	"https://www.deezevents.com/services",
 	"https://www.deezevents.com/contact",
 	"https://www.deezevents.com/services/karaoke",
 	"https://www.deezevents.com/services/dj-party",
