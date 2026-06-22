@@ -20,7 +20,7 @@ jobs:
         run: npm ci
 
       - name: Install Lighthouse
-        run: npm install --no-save lighthouse
+        run: npm install --no-save lighthouse@13.4.0
 
       - name: Install Chrome
         id: setup-chrome

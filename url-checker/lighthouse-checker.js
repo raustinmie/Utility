@@ -135,6 +135,43 @@ function getCategoryScores(payload) {
 	};
 }
 
+function getFailedCategoryAudits(payload, categoryId) {
+	const categories = payload?.categories || payload?.lighthouseResult?.categories || {};
+	const audits = payload?.audits || payload?.lighthouseResult?.audits || {};
+	const category = categories[categoryId];
+	const auditRefs = category?.auditRefs || [];
+
+	return auditRefs
+		.map(({ id, weight }) => {
+			const audit = audits[id];
+			if (!audit || weight === 0) return null;
+
+			const scoreDisplayMode = audit.scoreDisplayMode || "binary";
+			if (
+				scoreDisplayMode === "notApplicable" ||
+				scoreDisplayMode === "manual" ||
+				scoreDisplayMode === "informative"
+			) {
+				return null;
+			}
+
+			if (audit.score === 1) return null;
+
+			const parts = [audit.title || id];
+			if (typeof audit.score === "number") {
+				parts.push(`score ${Math.round(audit.score * 100)}`);
+			}
+			if (audit.details?.type === "debugdata" && audit.explanation) {
+				parts.push(audit.explanation);
+			} else if (audit.explanation) {
+				parts.push(audit.explanation);
+			}
+
+			return `${id}: ${parts.join(" | ")}`;
+		})
+		.filter(Boolean);
+}
+
 function summarizeScores(scores) {
 	return [
 		`performance ${formatScore(scores.performance)}`,
@@ -154,7 +191,9 @@ async function main() {
 		try {
 			const { payload, stderr } = await runLighthouse(pageUrl);
 			const scores = getCategoryScores(payload);
-			const summary = `${pageUrl} | ${summarizeScores(scores)} | strategy ${STRATEGY}`;
+			const lighthouseVersion =
+				payload?.lighthouseVersion || payload?.lighthouseResult?.lighthouseVersion || "unknown";
+			const summary = `${pageUrl} | ${summarizeScores(scores)} | strategy ${STRATEGY} | lighthouse ${lighthouseVersion}`;
 			console.log(`✅ ${summary}`);
 			if (stderr) {
 				console.log(`ℹ️ Lighthouse warnings: ${stderr}`);
@@ -172,9 +211,19 @@ async function main() {
 
 				const scoreOutOf100 = Math.round(score * 100);
 				if (scoreOutOf100 < threshold) {
-					issues.push(
-						`⚠️ ${category} below threshold: ${pageUrl} | Score ${scoreOutOf100} | Threshold ${threshold} | Strategy ${STRATEGY}`,
-					);
+					const issueLines = [
+						`⚠️ ${category} below threshold: ${pageUrl} | Score ${scoreOutOf100} | Threshold ${threshold} | Strategy ${STRATEGY} | Lighthouse ${lighthouseVersion}`,
+					];
+
+					if (category === "best-practices") {
+						const failedAudits = getFailedCategoryAudits(payload, category);
+						if (failedAudits.length > 0) {
+							issueLines.push("Failed best-practices audits:");
+							issueLines.push(...failedAudits.map((audit) => `  - ${audit}`));
+						}
+					}
+
+					issues.push(issueLines.join("\n"));
 				}
 			}
 		} catch (error) {
