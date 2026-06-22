@@ -185,7 +185,9 @@ async function main() {
 	const issues = [];
 	const summaries = [];
 
-	for (const pageUrl of HOMEPAGES_TO_CHECK) {
+	for (const homepageConfig of HOMEPAGES_TO_CHECK) {
+		const pageUrl = homepageConfig.url;
+		const ignoredCategories = new Set(homepageConfig.ignoreCategories || []);
 		console.log(`\n📊 Checking Lighthouse on: ${pageUrl}`);
 
 		try {
@@ -193,7 +195,21 @@ async function main() {
 			const scores = getCategoryScores(payload);
 			const lighthouseVersion =
 				payload?.lighthouseVersion || payload?.lighthouseResult?.lighthouseVersion || "unknown";
-			const summary = `${pageUrl} | ${summarizeScores(scores)} | strategy ${STRATEGY} | lighthouse ${lighthouseVersion}`;
+			const summaryParts = [
+				pageUrl,
+				summarizeScores(scores),
+				`strategy ${STRATEGY}`,
+				`lighthouse ${lighthouseVersion}`,
+			];
+			if (ignoredCategories.size > 0) {
+				summaryParts.push(
+					`ignored ${Array.from(ignoredCategories).sort().join(",")}`,
+				);
+			}
+			if (homepageConfig.note) {
+				summaryParts.push(`note ${homepageConfig.note}`);
+			}
+			const summary = summaryParts.join(" | ");
 			console.log(`✅ ${summary}`);
 			if (stderr) {
 				console.log(`ℹ️ Lighthouse warnings: ${stderr}`);
@@ -201,6 +217,11 @@ async function main() {
 			summaries.push(summary);
 
 			for (const [category, threshold] of Object.entries(THRESHOLDS)) {
+				if (ignoredCategories.has(category)) {
+					console.log(`ℹ️ Skipping ${category} threshold for ${pageUrl}`);
+					continue;
+				}
+
 				const score = scores[category];
 				if (typeof score !== "number") {
 					issues.push(

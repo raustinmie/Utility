@@ -198,6 +198,25 @@ const PAGES_TO_CHECK = [
 	"https://www.pacificgrowersinc.com/contact",
 ];
 
+const HOMEPAGE_AUDIT_RULES = {
+	// "https://www.example.com/": {
+	// 	ignoreCategories: ["performance"],
+	// 	note: "Known third-party widget issue",
+	// },
+	"https://www.thewashboy.com/": {
+		ignoreCategories: ["performance"],
+		note: "Third party integration causes slowdowns",
+	},
+	"https://www.harborviewwebdesign.com/": {
+		ignoreCategories: ["best practices"],
+		note: "false positives",
+	},
+	"https://www.lionscamphorizon.org/": {
+		ignoreCategories: ["best practices"],
+		note: "false positives",
+	},
+};
+
 const HOMEPAGES_TO_CHECK = PAGES_TO_CHECK.filter((pageUrl) => {
 	try {
 		const { pathname } = new URL(pageUrl);
@@ -205,9 +224,14 @@ const HOMEPAGES_TO_CHECK = PAGES_TO_CHECK.filter((pageUrl) => {
 	} catch {
 		return false;
 	}
-});
+}).map((pageUrl) => ({
+	url: pageUrl,
+	ignoreCategories: HOMEPAGE_AUDIT_RULES[pageUrl]?.ignoreCategories || [],
+	note: HOMEPAGE_AUDIT_RULES[pageUrl]?.note || "",
+}));
 
 module.exports = {
+	HOMEPAGE_AUDIT_RULES,
 	TEMP_PAGES,
 	PAGES_TO_CHECK,
 	HOMEPAGES_TO_CHECK,
