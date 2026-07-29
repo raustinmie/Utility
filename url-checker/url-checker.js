@@ -52,10 +52,26 @@ function isIgnoredLink(url) {
 	return IGNORED_LINKS.has(url.trim());
 }
 
-async function checkLink(url, parentPage) {
+function normalizeLink(url, parentPage) {
+	try {
+		const normalized = new URL(url, parentPage);
+		normalized.hash = "";
+		return normalized.href;
+	} catch {
+		return null;
+	}
+}
+
+function formatParentPages(parentPages) {
+	return [...parentPages].join(", ");
+}
+
+async function checkLink(url, parentPages) {
+	const parentPageList = formatParentPages(parentPages);
+
 	try {
 		if (isIgnoredLink(url)) {
-			const linkLogMessage = `⚠️ Ignored link on ${parentPage}: ${url}`;
+			const linkLogMessage = `⚠️ Ignored link on ${parentPageList}: ${url}`;
 			console.log(linkLogMessage);
 			return { linkSuccess: true, linkLogMessage };
 		}
@@ -75,27 +91,32 @@ async function checkLink(url, parentPage) {
 				isSocialMedia(url) &&
 				(response.status === 400 ||
 					response.status === 403 ||
+					response.status === 415 ||
 					response.status === 429)
 			) {
-				const linkLogMessage = `⚠️ Social media link potentially restricted on ${parentPage}: ${url} (Status ${response.status})`;
+				const linkLogMessage = `⚠️ Social media link potentially restricted on ${parentPageList}: ${url} (Status ${response.status})`;
 				console.log(linkLogMessage);
 				return { linkSuccess: true, linkLogMessage };
 			}
-			if (response.status === 403 || response.status === 429) {
-				const linkLogMessage = `⚠️ Link may be blocking automated requests on ${parentPage}: ${url} (Status ${response.status})`;
+			if (
+				response.status === 403 ||
+				response.status === 415 ||
+				response.status === 429
+			) {
+				const linkLogMessage = `⚠️ Link may be blocking automated requests on ${parentPageList}: ${url} (Status ${response.status})`;
 				console.log(linkLogMessage);
 				return { linkSuccess: true, linkLogMessage };
 			}
-			linkLogMessage = `❌ Broken link on ${parentPage}: ${url} (Status ${response.status}`;
+			linkLogMessage = `❌ Broken link on ${parentPageList}: ${url} (Status ${response.status})`;
 			console.log(linkLogMessage);
 			return { linkSuccess: false, linkLogMessage };
 		} else {
-			linkLogMessage = `✅ OK link on ${parentPage}: ${url}`;
+			linkLogMessage = `✅ OK link on ${parentPageList}: ${url}`;
 			console.log(linkLogMessage);
 			return { linkSuccess: true, linkLogMessage };
 		}
 	} catch (error) {
-		linkLogMessage = `⚠️ Error on ${parentPage}: ${url} (${error.message})`;
+		linkLogMessage = `⚠️ Error on ${parentPageList}: ${url} (${error.message})`;
 		console.log(linkLogMessage);
 		return { linkSuccess: false, linkLogMessage };
 	}
@@ -111,10 +132,10 @@ async function getLinksFromPage(pageUrl) {
 		$("a").each((_, element) => {
 			let href = $(element).attr("href");
 			if (href && !href.startsWith("mailto:") && !href.startsWith("tel:")) {
-				if (href.startsWith("/")) {
-					href = new URL(href, pageUrl).href; // Make relative links absolute
+				const normalizedHref = normalizeLink(href, pageUrl);
+				if (normalizedHref) {
+					links.push(normalizedHref);
 				}
-				links.push(href);
 			}
 		});
 		var logMessage = "Success!";
@@ -128,15 +149,25 @@ async function getLinksFromPage(pageUrl) {
 
 async function main() {
 	var brokenLinks = [];
+	const linksByUrl = new Map();
+
 	for (const page of PAGES_TO_CHECK) {
 		console.log(`\n🔍 Checking links on: ${page}`);
 		const { success, links, logMessage } = await getLinksFromPage(page);
 		if (!success) brokenLinks.push(`Page ${page} | Error: ${logMessage}`);
 		if (!links) continue;
 		for (const link of links) {
-			var { linkSuccess, linkLogMessage } = await checkLink(link, page);
-			if (!linkSuccess)
-				brokenLinks.push(`Link ${link} | Error: ${linkLogMessage}`);
+			if (!linksByUrl.has(link)) {
+				linksByUrl.set(link, new Set());
+			}
+			linksByUrl.get(link).add(page);
+		}
+	}
+
+	for (const [link, parentPages] of linksByUrl) {
+		var { linkSuccess, linkLogMessage } = await checkLink(link, parentPages);
+		if (!linkSuccess) {
+			brokenLinks.push(`Link ${link} | Error: ${linkLogMessage}`);
 		}
 	}
 	if (brokenLinks.length > 0) {

@@ -76,12 +76,25 @@ function resolveLighthouseCommand() {
 	};
 }
 
-function buildLighthouseArgs(pageUrl) {
+function normalizeCategoryId(category) {
+	return String(category || "")
+		.trim()
+		.toLowerCase()
+		.replace(/\s+/g, "-");
+}
+
+function getIgnoredCategories(homepageConfig) {
+	return new Set(
+		(homepageConfig.ignoreCategories || []).map(normalizeCategoryId),
+	);
+}
+
+function buildLighthouseArgs(pageUrl, categoriesToCheck) {
 	const args = [
 		pageUrl,
 		"--output=json",
 		"--output-path=stdout",
-		"--only-categories=performance,accessibility,best-practices,seo",
+		`--only-categories=${categoriesToCheck.join(",")}`,
 		"--quiet",
 		"--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage",
 	];
@@ -97,13 +110,13 @@ function buildLighthouseArgs(pageUrl) {
 	return args;
 }
 
-async function runLighthouse(pageUrl) {
+async function runLighthouse(pageUrl, categoriesToCheck) {
 	const { command, baseArgs } = resolveLighthouseCommand();
 
 	try {
 		const { stdout, stderr } = await execFileAsync(
 			command,
-			[...baseArgs, ...buildLighthouseArgs(pageUrl)],
+			[...baseArgs, ...buildLighthouseArgs(pageUrl, categoriesToCheck)],
 			{
 				cwd: path.resolve(__dirname, ".."),
 				env: {
@@ -184,14 +197,18 @@ function summarizeScores(scores) {
 async function main() {
 	const issues = [];
 	const summaries = [];
+	const allCategories = Object.keys(THRESHOLDS);
 
 	for (const homepageConfig of HOMEPAGES_TO_CHECK) {
 		const pageUrl = homepageConfig.url;
-		const ignoredCategories = new Set(homepageConfig.ignoreCategories || []);
+		const ignoredCategories = getIgnoredCategories(homepageConfig);
+		const categoriesToCheck = allCategories.filter(
+			(category) => !ignoredCategories.has(category),
+		);
 		console.log(`\n📊 Checking Lighthouse on: ${pageUrl}`);
 
 		try {
-			const { payload, stderr } = await runLighthouse(pageUrl);
+			const { payload, stderr } = await runLighthouse(pageUrl, categoriesToCheck);
 			const scores = getCategoryScores(payload);
 			const lighthouseVersion =
 				payload?.lighthouseVersion || payload?.lighthouseResult?.lighthouseVersion || "unknown";

@@ -196,6 +196,19 @@ const PAGES_TO_CHECK = [
 	"https://www.pacificgrowersinc.com/fundraisers",
 	"https://www.pacificgrowersinc.com/gallery",
 	"https://www.pacificgrowersinc.com/contact",
+	// GRIMSBY LIFE CENTRE
+	"https://www.grimsbylife.org/",
+	"https://www.grimsbylife.org/services",
+	"https://www.grimsbylife.org/about",
+	"https://www.grimsbylife.org/get-involved",
+	"https://www.grimsbylife.org/contact",
+	"https://www.grimsbylife.org/coming-soon",
+	// SAMISH CABINETRY
+	"https://www.samishcabinetry.com/",
+	"https://www.samishcabinetry.com/services",
+	"https://www.samishcabinetry.com/about",
+	"https://www.samishcabinetry.com/gallery",
+	"https://www.samishcabinetry.com/contact",
 ];
 
 const HOMEPAGE_AUDIT_RULES = {
